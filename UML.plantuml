@@ -1,0 +1,149 @@
+@startuml
+hide circle
+
+
+package "Itineraire" #DDDDDD {
+class Gare {
+  nom : string
+  ville : string
+  adresse : string
+  horaire : heure
+}
+note left: {(nom,ville) key}
+
+class Train <<abstract>> {
+  num : int {key}
+  placemax : const int
+  classe1 : const bool
+  vitessemax : const int
+  nb_arrets() : int
+}
+
+class RER {
+}
+
+class TGV {
+}
+
+class TER {
+}
+
+class Ligne {
+  code : int  {key}
+  nom : string
+  nb_traverse() : int
+  get_depart() : string
+  get_arrivee() : string
+}
+
+class Trajet {
+  place : int
+  duree()
+}
+
+class Arret {
+  rang : int
+}
+
+
+class Horaire {
+  arrivee: heure
+  depart : heure
+}
+note right
+arret.code = train.code
+end note
+
+class Calendrier <<abstract>> {
+}
+
+
+class RegulierC {
+  tab[lundi,..., dimanche]: bool
+}
+
+class ExceptionnelC {
+  ajout : bool
+  jour_debut : date
+  jour_fin : date
+}
+note left
+jour_debut <= jour_fin
+end note
+
+}
+package "Achat" #DDDDDD {
+class Billet {
+  id : int
+  gare_depart : string
+  depart : heure
+  gare_arrivee : string
+  arrivee : heure
+  assurance : bool
+  prix : int
+  duree()
+}
+
+class Voyageur <<abstract>> {
+  id : int
+  nom : string
+  prenom : string
+  adresse : string
+  num_tel : int[10]
+}
+
+class OccasionnelV {
+
+}
+
+class RegulierV {
+  num_carte : int
+  statut : {voyageur|grandVoyageur|grandVoyageurPlus}
+}
+
+class Reservation {
+  paiement : {especes, CB, cheque}
+}
+
+class Hotel {
+  adresse : string
+  nom : string
+  nb_etoile : int
+}
+
+class Taxis {
+  numero : int
+  marque : string
+  tarif : int
+  tel : int
+}
+
+class Transport {
+  numero : int
+  compagnie : string
+  type : {bus, velo, tramway}
+}
+
+Train <|-- RER
+Train <|-- TER
+Train <|-- TGV
+Gare "1" -- "1..*" Arret : se fait dans <
+Arret "1..*" -- "1" Ligne : se situe sur >
+Ligne "1" -- "1..*" Train : circule sur <
+Horaire "1" -- "1..*" Trajet : depart >
+Horaire "1" -- "1..*" Trajet : arrivee >
+Horaire "1..*" -- "1" Arret : se fait a <
+Horaire "1..*" -- "1" Train : circule a <
+Billet "1" -- "1" Reservation : contient <
+Reservation "1..*" -- "1"  Voyageur : est faite par >
+Reservation "1..*" -- "1..*"  Taxis : propose >
+Reservation "1..*" -- "1..*"  Transport : propose >
+Reservation "1..*" -- "1..*"  Hotel : propose >
+Billet "1" -- "1..*" Trajet : correspond >
+Horaire "1..*" --- "1" RegulierC : concerne <
+Horaire "1..*" ---- "0..*" ExceptionnelC : concerne <
+RegulierC --|> Calendrier
+ExceptionnelC --|> Calendrier
+OccasionnelV --|> Voyageur
+RegulierV --|> Voyageur
+@enduml
