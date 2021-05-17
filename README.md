@@ -1,11 +1,5 @@
 # Projet NF18
 
-## Liens utiles
-
-[Notes de réunion](https://hackmd.io/@sachatouille/BJTxImY4_/edit)
-[Note de clarification (à rendre le 9/04 au plus tard)](https://www.overleaf.com/4151293386rzprgbfgpgbv)
-
-
 ## Fonctionnement général
 
 L'objectif du projet est de mettre en pratique les principes de conception, de développement et d'interrogation de base de données vus en cours sur un exemple concret significatif.
