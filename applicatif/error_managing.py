@@ -5,3 +5,29 @@ class DBContentException:
 		self.message = m
 	def getMessage():
 		return self.message
+
+def erreurLigne(connexion):
+	curs = connexion.cursor()
+
+	query = "SELECT * FROM verifLigne"
+
+	curs.execute(query)
+	res = curs.fetchone()
+
+	if(res[0]!=0):
+		return True
+
+	return False
+
+def erreurTrain(connexion):
+	curs = connexion.cursor()
+
+	query = "SELECT * FROM verifTrain"
+
+	curs.execute(query)
+	res = curs.fetchone()
+
+	if(res[0]!=0):
+		return True
+
+	return False

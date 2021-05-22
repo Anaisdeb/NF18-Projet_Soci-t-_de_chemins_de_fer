@@ -1,4 +1,5 @@
 import random
+import error_managing
 
 def creer_billet(connection):
 	cursor = connection.cursor()
@@ -52,4 +53,57 @@ def ajouter_trajet(connection, idBillet, hDepart, hArrivee, date):
 	query = f"INSERT INTO Trajet VALUES({idBillet}, {newPlace}, {hDepart}, {hArrivee})"
 	cursor.execute(query)
 
-	connection.commit()
+	# 3 : proposer les hôtels, taxis, transports à proximité.
+
+	query = f"""SELECT Ho.adresse, Ho.nom, Ho.nb_etoiles
+	FROM Horaire H
+	JOIN Arret A ON H.rang = A.rang AND H.code_ligne = A.code_ligne
+	JOIN Hotel Ho ON Ho.ville = A.ville
+	WHERE H.id = {hArrivee}
+	"""
+
+	print("-- Hôtels à proximité de la gare d'arrivée --")
+
+	cursor.execute(query)
+	row = cursor.fetchone()
+
+	while(row):
+		print(f"- Hôtel {row[1]}, {row[0]}, {row[2]} étoiles")
+		row = cursor.fetchone()
+
+	print("-- Taxis à proximité de la gare d'arrivée --")
+
+	query = f"""SELECT T.numero, T.marque, T.tarif, T.tel
+	FROM Horaire H
+	JOIN Arret A ON H.rang = A.rang AND H.code_ligne = A.code_ligne
+	JOIN Taxi T ON T.ville = A.ville
+	WHERE H.id = {hArrivee}
+	"""
+
+	cursor.execute(query)
+	row = cursor.fetchone()
+
+	while(row):
+		print(f"- Taxi n°{row[0]}, marque {row[1]}, tarif : {row[2]}, téléphone : {row[3]}")
+		row = cursor.fetchone()
+
+	print("-- Transports à proximité de la gare d'arrivée  --")
+	query = f"""SELECT T.numero, T.compagnie, T.tarif, T.type
+	FROM Horaire H
+	JOIN Arret A ON H.rang = A.rang AND H.code_ligne = A.code_ligne
+	JOIN Transport T ON T.ville = A.ville
+	WHERE H.id = {hArrivee}
+	"""
+
+	cursor.execute(query)
+	row = cursor.fetchone()
+
+	while(row):
+		print(f"- {row[0]} : {row[3]}, compagnie {row[1]}, tarif : {row[2]}")
+		row = cursor.fetchone()
+
+	if(error_managing.erreurTrain(connection)):
+		print("Erreur d'insertion : les horaires de départ et d'arrivée ne sont pas liés au même train.")
+		connection.rollback()
+	else:
+		connection.commit()

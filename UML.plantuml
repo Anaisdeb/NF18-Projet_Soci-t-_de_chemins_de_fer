@@ -107,12 +107,14 @@ class Reservation {
 
 class Hotel {
   adresse : string
+  ville : string
   nom : string
   nb_etoile : int
 }
 
 class Taxis {
   numero : int
+  ville : string
   marque : string
   tarif : int
   tel : int
@@ -120,6 +122,7 @@ class Taxis {
 
 class Transport {
   numero : int
+  ville : string
   compagnie : string
   type : {bus, velo, tramway}
 }

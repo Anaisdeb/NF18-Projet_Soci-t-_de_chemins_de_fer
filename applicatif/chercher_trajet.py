@@ -65,11 +65,11 @@ def recherche_trajet(connection):
 		print(i+1," - ",res[i][0])
 	print("+---------------+")
 
-	garr = int(input("N° de la gare de départ ? "))-1
+	garr = int(input("N° de la gare d'arrivée ? "))-1
 
 	while(not(garr >= 0 and garr <= i)):
 		print("Erreur : numéro saisi hors de portée, veuillez recommencer.")
-		garr = int(input("N° de la gare de départ ? "))-1
+		garr = int(input("N° de la gare d'arrivée ? "))-1
 
 	garr = res[garr][0].replace("'","''")
 
@@ -82,7 +82,6 @@ def recherche_trajet(connection):
 	jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
 	jour = datetime.datetime.strptime(date,'%d/%m/%Y').weekday()
 	jour = jours[jour]
-	duree = input("Durée maximale (en min, à saisir sans unité) ? ")
 
 	hmin = hmin[0]+":"+hmin[1]+":00"
 	hmax = hmax[0]+":"+hmax[1]+":00"
@@ -109,6 +108,8 @@ def recherche_trajet(connection):
 	LEFT OUTER JOIN ExceptionnelC EC ON ECH.exceptionnelC = EC.id
 	WHERE A1.nom_gare = '{gdep}' AND A1.ville = '{vdep}' AND A2.nom_gare = '{garr}' AND A2.ville = '{varr}'
 	AND H1.depart BETWEEN '{hmin}' AND '{hmax}'
+	AND H1.depart <> H1.arrivee AND H2.depart <> H2.arrivee
+	AND H1.depart < H2.arrivee
 	AND (RC1.{jour} = true AND RC2.{jour} = true) OR ('{date}' BETWEEN EC.jour_debut AND EC.jour_fin AND ECH.id_horaire IS NOT NULL)
 	"""
 
@@ -118,42 +119,49 @@ def recherche_trajet(connection):
 
 	res = curs.fetchall()
 
-	query = """SELECT Tr.placemax, COUNT (*)
-	FROM Trajet T
-	JOIN Horaire H ON T.horaire_depart = H.depart AND T.horaire_arrivee = H.arrivee
-	JOIN Train Tr ON H.train = Tr.id
-	GROUP BY Tr.id"""
+	if(res):
 
-	for i in range(len(res)):
-		print("Trajet ",i+1," : ")
-		print("Départ : ",res[i][0])
-		print("Arrivée : ", res[i][1])
-		print("Train : ",res[i][2])
+		query = """SELECT Tr.placemax, COUNT (*)
+		FROM Trajet T
+		JOIN Horaire H ON T.horaire_depart = H.depart AND T.horaire_arrivee = H.arrivee
+		JOIN Train Tr ON H.train = Tr.id
+		GROUP BY Tr.id"""
 
-	# 5 : indication du nombre de places dans le train proposé : nb de places du train - SELECT COUNT * FROM Trajet T JOIN Horaire H ON T.horaire_depart = H.depart AND T.horaire_arrivee = H.arrivee JOIN Train Tr ON H.train = Tr.id
+		for i in range(len(res)):
+			print("Trajet ",i+1," : ")
+			print("Départ : ",res[i][0])
+			print("Arrivée : ", res[i][1])
+			print("Train : ",res[i][2])
 
-	# 6 : proposition de réservation d'un billet.
-	choix = input("Souhaitez-vous réserver un billet ? (y/n)")
+		# 5 : indication du nombre de places dans le train proposé : nb de places du train - SELECT COUNT * FROM Trajet T JOIN Horaire H ON T.horaire_depart = H.depart AND T.horaire_arrivee = H.arrivee JOIN Train Tr ON H.train = Tr.id
 
-	if(choix == 'y'):
-		choix = int(input("Veuillez indiquer le n° du trajet à réserver."))-1
-		
-		while(choix <0 or choix>i+1):
-			choix = int(input("Erreur : le trajet entré ne figure pas dans la liste proposée. Veuillez réessayer."))
+		# 6 : proposition de réservation d'un billet.
+		choix = input("Souhaitez-vous réserver un billet ? (y/n)")
 
-		choix2 = input("Ajouter le trajet à un billet existant ? (y/n)")
+		if(choix == 'y'):
+			choix = int(input("Veuillez indiquer le n° du trajet à réserver."))-1
+			
+			while(choix <0 or choix>i+1):
+				choix = int(input("Erreur : le trajet entré ne figure pas dans la liste proposée. Veuillez réessayer."))
 
-		if(choix2 == "y"):
-			idBillet = input("Veuillez entrer le numéro du billet auquel ajouter le trajet.")
-			reserver_billet.ajouter_trajet(connection,idBillet,res[choix][3], res[choix][4], date)
-		
-		else:
-			idBillet = reserver_billet.creer_billet(connection)
-			print("Numéro du billet créé : ",idBillet)
-			reserver_billet.ajouter_trajet(connection, idBillet, res[choix][3], res[choix][4], date)
-			query = f"""UPDATE Billet
-			SET gare_depart = '{gdep}', gare_arrivee = '{garr}', depart = '{res[choix][0]}', arrivee = '{res[choix][1]}'
-			WHERE id = {idBillet}"""
-			curs.execute(query)
-			connection.commit()
+			choix2 = input("Ajouter le trajet à un billet existant ? (y/n)")
 
+			if(choix2 == "y"):
+				idBillet = input("Veuillez entrer le numéro du billet auquel ajouter le trajet.")
+				reserver_billet.ajouter_trajet(connection,idBillet,res[choix][3], res[choix][4], date)
+			
+			else:
+				idBillet = reserver_billet.creer_billet(connection)
+				print("Numéro du billet créé : ",idBillet)
+				reserver_billet.ajouter_trajet(connection, idBillet, res[choix][3], res[choix][4], date)
+				query = f"""UPDATE Billet
+				SET gare_depart = '{gdep}', gare_arrivee = '{garr}', depart = '{res[choix][0]}', arrivee = '{res[choix][1]}'
+				WHERE id = {idBillet}"""
+				curs.execute(query)
+				connection.commit()
+
+		return
+
+	else:
+		print("Aucun trajet ne correspond à votre recherche.")
+		return
